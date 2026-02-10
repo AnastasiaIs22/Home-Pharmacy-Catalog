@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Pharmacy Catalog - Тестовый сайт</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .project-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 3px solid #e9ecef;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .main-content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .section h3 {
+            color: #6c63ff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3::before {
+            content: "✓";
+            background: #6c63ff;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .data-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .type-badge {
+            background: white;
+            border: 2px solid #6c63ff;
+            border-radius: 8px;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c63ff;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .type-badge:hover {
+            background: #6c63ff;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: white;
+            border-left: 4px solid #6c63ff;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.success {
+            display: block;
+            border-color: #4CAF50;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.error {
+            display: block;
+            border-color: #f44336;
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status.info {
+            display: block;
+            border-color: #2196F3;
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .data-display {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 2px solid #e0e0e0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            border-top: 3px solid #e9ecef;
+            margin-top: 30px;
+        }
+
+        .github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #333;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 10px;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .github-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 Home Pharmacy Catalog</h1>
+            <p>Тестовый сайт для работы с Supabase и проверки типов данных</p>
+        </header>
+
+        <div class="project-info">
+            <div class="info-card">
+                <h4>📊 Данные проекта</h4>
+                <p><strong>Проект:</strong> Home Pharmacy Catalog</p>
+                <p><strong>Организация:</strong> Анастасия</p>
+                <p><strong>GitHub:</strong> AnastasiaIs22</p>
+            </div>
+            <div class="info-card">
+                <h4>🔗 Соединение с Supabase</h4>
+                <p><strong>URL:</strong> hocudyimgknwaitlsagk.supabase.co</p>
+                <p><strong>Проект ID:</strong> hocudyimgknwaitlsagk</p>
+                <p><strong>Статус:</strong> <span id="connectionStatus">Проверка...</span></p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <h3>📋 Поддерживаемые типы данных</h3>
+                <div class="data-types">
+                    <div class="type-badge">int8 → bigint</div>
+                    <div class="type-badge">int4 → integer</div>
+                    <div class="type-badge">int2 → smallint</div>
+                    <div class="type-badge">text → текст</div>
+                    <div class="type-badge">varchar → текст</div>
+                    <div class="type-badge">bool → boolean</div>
+                    <div class="type-badge">timestamp → дата</div>
+                    <div class="type-badge">timestamptz → дата+время</div>
+                    <div class="type-badge">date → только дата</div>
+                    <div class="type-badge">time → время</div>
+                    <div class="type-badge">uuid → UUID</div>
+                    <div class="type-badge">jsonb → JSON</div>
+                    <div class="type-badge">numeric → число</div>
+                    <div class="type-badge">float8 → double</div>
+                    <div class="type-badge">float4 → real</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>🧪 Тестирование соединения</h3>
+                <div class="controls">
+                    <button onclick="testConnection()">
+                        🔍 Проверить соединение
+                    </button>
+                    
+                    <button onclick="createTestTable()" class="secondary">
+                        🗃️ Создать тестовую таблицу
+                    </button>
+
+                    <select id="testType" onchange="showTestForm()">
+                        <option value="">Выберите тип теста...</option>
+                        <option value="insert">Добавить данные</option>
+                        <option value="select">Получить данные</option>
+                        <option value="update">Обновить данные</option>
+                        <option value="delete">Удалить данные</option>
+                    </select>
+
+                    <div id="testForm" style="display: none;">
+                        <input type="text" id="testData" placeholder="Введите тестовые данные...">
+                        <button onclick="performTest()">▶️ Выполнить тест</button>
+                    </div>
+                </div>
+
+                <div id="status" class="status"></div>
+
+                <div id="dataOutput" class="data-display">
+                    Здесь будут отображаться результаты...
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Проект: "Home Pharmacy Catalog" | Разработчик: Анастасия</p>
+            <a href="https://github.com/AnastasiaIs22" target="_blank" class="github-link">
+                <svg height="20" viewBox="0 0 16 16" width="20">
+                    <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                </svg>
+                Перейти в GitHub репозиторий
+            </a>
+        </footer>
+    </div>
+
+    <script>
+        // Инициализация Supabase
+        const supabaseUrl = 'https://hocudyimgknwaitlsagk.supabase.co';
+        const supabaseKey = 'sb_publishable_vpdM56mSm1zukhIXNCPQkg_6vM9qxMH';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // Элементы DOM
+        const connectionStatus = document.getElementById('connectionStatus');
+        const statusDiv = document.getElementById('status');
+        const dataOutput = document.getElementById('dataOutput');
+        const testForm = document.getElementById('testForm');
+
+        // Проверка соединения при загрузке
+        async function init() {
+            try {
+                const { data, error } = await supabase
+                    .from('_test')
+                    .select('*')
+                    .limit(1);
+                
+                if (error && error.code !== '42P01') { // Игнорируем ошибку "таблица не существует"
+                    throw error;
+                }
+                
+                connectionStatus.innerHTML = '✅ Подключено успешно';
+                connectionStatus.style.color = '#4CAF50';
+                showStatus('✅ Соединение с Supabase установлено!', 'success');
+            } catch (error) {
+                connectionStatus.innerHTML = '❌ Ошибка подключения';
+                connectionStatus.style.color = '#f44336';
+                showStatus('❌ Ошибка подключения: ' + error.message, 'error');
+            }
+        }
+
+        // Функция проверки соединения
+        async function testConnection() {
+            showStatus('🔍 Проверяем соединение...', 'info');
+            
+            try {
+                const { data, error } = await supabase.auth.getSession();
+                
+                if (error) throw error;
+                
+                showStatus('✅ Соединение с Supabase работает корректно!', 'success');
+                
+                // Получаем информацию о проекте
+                const projectInfo = {
+                    url: supabaseUrl,
+                    projectId: 'hocudyimgknwaitlsagk',
+                    timestamp: new Date().toLocaleString(),
+                    status: 'active'
+                };
+                
+                dataOutput.innerHTML = `<pre>${JSON.stringify(projectInfo, null, 2)}</pre>`;
+            } catch (error) {
+                showStatus('❌ Ошибка соединения: ' + error.message, 'error');
+                dataOutput.innerHTML = `<pre>${error.message}</pre>`;
+            }
+        }
+
+        // Создание тестовой таблицы
+        async function createTestTable() {
+            showStatus('🛠️ Создаем тестовую таблицу...', 'info');
+            
+            // Создаем таблицу через REST API
+            const testData = {
+                table_name: 'pharmacy_test',
+                columns: [
+                    { name: 'id', type: 'uuid', primary_key: true },
+                    { name: 'medicine_name', type: 'varchar', length: 100 },
+                    { name: 'quantity', type: 'int4' },
+                    { name: 'price', type: 'numeric', precision: 10, scale: 2 },
+                    { name: 'is_available', type: 'bool' },
+                    { name: 'created_at', type: 'timestamptz' },
+                    { name: 'expiry_date', type: 'date' },
+                    { name: 'details', type: 'jsonb' }
+                ]
+            };
+            
+            dataOutput.innerHTML = `<pre>Структура таблицы:\n${JSON.stringify(testData, null, 2)}</pre>`;
+            
+            showStatus('📋 Тестовая структура таблицы создана. Для реального создания используйте SQL в Supabase Studio.', 'success');
+        }
+
+        // Показать форму для теста
+        function showTestForm() {
+            const testType = document.getElementById('testType').value;
+            testForm.style.display = testType ? 'block' : 'none';
+            
+            const input = document.getElementById('testData');
+            switch(testType) {
+                case 'insert':
+                    input.placeholder = 'Введите название лекарства для добавления';
+                    break;
+                case 'select':
+                    input.placeholder = 'Введите ID для поиска (оставьте пустым для всех)';
+                    break;
+                case 'update':
+                    input.placeholder = 'Введите ID и новые данные: id|новое название';
+                    break;
+                case 'delete':
+                    input.placeholder = 'Введите ID для удаления';
+                    break;
+            }
+        }
+
+        // Выполнить тест
+        async function performTest() {
+            const testType = document.getElementById('testType').value;
+            const testData = document.getElementById('testData').value;
+            
+            if (!testType) {
+                showStatus('⚠️ Выберите тип теста', 'error');
+                return;
+            }
+            
+            switch(testType) {
+                case 'insert':
+                    await testInsert(testData);
+                    break;
+                case 'select':
+                    await testSelect(testData);
+                    break;
+                case 'update':
+                    await testUpdate(testData);
+                    break;
+                case 'delete':
+                    await testDelete(testData);
+                    break;
+            }
+        }
+
+        // Тест INSERT
+        async function testInsert(medicineName) {
+            if (!medicineName) {
+                showStatus('⚠️ Введите название лекарства', 'error');
+                return;
+            }
+            
+            showStatus('➕ Добавляем запись...', 'info');
+            
+            const newMedicine = {
+                medicine_name: medicineName || 'Тестовое лекарство',
+                quantity: Math.floor(Math.random() * 100) + 1,
+                price: (Math.random() * 1000).toFixed(2),
+                is_available: Math.random() > 0.5,
+                created_at: new Date().toISOString(),
+                expiry_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                details: {
+                    manufacturer: 'Тестовый производитель',
+                    dosage: '500mg',
+                    prescription: Math.random() > 0.5
+                }
+            };
+            
+            dataOutput.innerHTML = `<pre>Данные для добавления:\n${JSON.stringify(newMedicine, null, 2)}</pre>`;
+            showStatus('📝 Тест INSERT завершен (реальный запрос не отправлен)', 'success');
+        }
+
+        // Тест SELECT
+        async function testSelect(id) {
+            showStatus('🔍 Ищем данные...', 'info');
+            
+            if (id) {
+                dataOutput.innerHTML = `<pre>Поиск записи с ID: ${id}\n\nИмитация запроса SELECT * FROM pharmacy_test WHERE id = '${id}'</pre>`;
+            } else {
+                dataOutput.innerHTML = `<pre>Получение всех записей\n\nИмитация запроса SELECT * FROM pharmacy_test LIMIT 10</pre>`;
+            }
+            
+            showStatus('✅ Тест SELECT завершен', 'success');
+        }
+
+        // Тест UPDATE
+        async function testUpdate(data) {
+            const [id, newName] = data.split('|');
+            
+            if (!id || !newName) {
+                showStatus('⚠️ Введите ID и новое название через "|"', 'error');
+                return;
+            }
+            
+            showStatus('✏️ Обновляем запись...', 'info');
+            
+            dataOutput.innerHTML = `<pre>Обновление записи:\nID: ${id}\nНовое название: ${newName}\n\nИмитация запроса:\nUPDATE pharmacy_test \nSET medicine_name = '${newName}', \n    updated_at = NOW() \nWHERE id = '${id}'</pre>`;
+            
+            showStatus('✅ Тест UPDATE завершен', 'success');
+        }
+
+        // Тест DELETE
+        async function testDelete(id) {
+            if (!id) {
+                showStatus('⚠️ Введите ID для удаления', 'error');
+                return;
+            }
+            
+            showStatus('🗑️ Удаляем запись...', 'info');
+            
+            dataOutput.innerHTML = `<pre>Удаление записи с ID: ${id}\n\nИмитация запроса:\nDELETE FROM pharmacy_test \nWHERE id = '${id}'</pre>`;
+            
+            showStatus('⚠️ Тест DELETE завершен (реальное удаление не выполнено)', 'info');
+        }
+
+        // Показать статус
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            
+            // Автоматическое скрытие через 5 секунд
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
