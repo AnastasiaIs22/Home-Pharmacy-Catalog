@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Моя аптека</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+    input, textarea, button { width: 100%; margin-bottom: 10px; padding: 8px; }
+    button { background: #4CAF50; color: white; border: none; cursor: pointer; }
+    #message { margin-top: 20px; padding: 10px; display: none; }
+    .success { background: #d4edda; color: #155724; display: block; }
+    .error { background: #f8d7da; color: #721c24; display: block; }
+  </style>
+</head>
+<body>
+  <h1>Добавить лекарство</h1>
+  
+  <form id="medicineForm">
+    <input type="text" id="name" placeholder="Название" required>
+    <textarea id="description" placeholder="Описание"></textarea>
+    <input type="number" id="price" placeholder="Цена" step="0.01">
+    <button type="submit">Сохранить</button>
+  </form>
+
+  <div id="message"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ========== ПРЯМЫЕ КЛЮЧИ ==========
+    const supabaseUrl = 'https://hocudyimgknwaitlsagk.supabase.co'
+    const supabaseKey = 'sb_publishable_vpdM56mSm1zukhIXNCPQkg_6vM9qxMH'
+    // ==================================
+
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+
+    const form = document.getElementById('medicineForm')
+    const messageDiv = document.getElementById('message')
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      
+      const name = document.getElementById('name').value
+      const description = document.getElementById('description').value
+      const price = document.getElementById('price').value
+
+      // Показываем сообщение
+      messageDiv.className = ''
+      messageDiv.style.display = 'block'
+      messageDiv.textContent = 'Отправка...'
+
+      try {
+        const { data, error } = await supabase
+          .from('medicines')
+          .insert([
+            { 
+              name, 
+              description, 
+              price: price ? parseFloat(price) : null 
+            }
+          ])
+
+        if (error) {
+          messageDiv.className = 'error'
+          messageDiv.textContent = 'Ошибка: ' + error.message
+          console.error('Supabase error:', error)
+        } else {
+          messageDiv.className = 'success'
+          messageDiv.textContent = '✅ Данные сохранены!'
+          form.reset()
+          console.log('Успех:', data)
+        }
+      } catch (err) {
+        messageDiv.className = 'error'
+        messageDiv.textContent = 'Ошибка соединения: ' + err.message
+        console.error('Fatal error:', err)
+      }
+    })
+  </script>
+</body>
+</html>
